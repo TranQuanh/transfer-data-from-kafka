@@ -1,0 +1,2 @@
+2024-10-01 23:19:57,964 - ERROR - Kafka Error: KafkaError{code=_MAX_POLL_EXCEEDED,val=-147,str="Application maximum poll interval (300000ms) exceeded by 837436ms"}
+2024-10-02 17:23:03,186 - ERROR - Kafka Error: KafkaError{code=_MAX_POLL_EXCEEDED,val=-147,str="Application maximum poll interval (300000ms) exceeded by 434ms"}
