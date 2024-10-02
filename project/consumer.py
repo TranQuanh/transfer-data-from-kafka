@@ -37,11 +37,8 @@ def msg_process(msg,destination):
         # Chuyển đổi chuỗi string sang đối tượng JSON
         msg_json = json.loads(msg_value)
 
-        if destination in globals():
-            func = globals()[destination]
-            func(msg_json)
-        else:
-            print("Không có hàm")
+        func = globals()[destination]
+        func(msg_json)
     except json.JSONDecodeError as e:
         # Xử lý lỗi nếu dữ liệu không phải JSON hợp lệ
         print(f"Failed to decode JSON: {e}")
@@ -53,27 +50,28 @@ def consume_loop(consumer,destination):
 
         msg_count = 0
         while running:
-            # msgs = consumer.consume(5 , timeout=5000) #milisecond
-            msg = consumer.poll(timeout = 100.0)
-            if msg is None: continue
+            msgs = consumer.consume(50, timeout=1000) #milisecond
+            # msg = consumer.poll(timeout = 100.0)
+            for msg in msgs:
+                if msg is None: continue
 
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    #End of partition event
-                    sys.stderr.write('%% %s [%d] reached end at offset %d\n' %
-                                    (msg.topic(), msg.partition(), msg.offset()))
-                    continue
-                elif msg.error():
-                    logging.error(f"Kafka Error: {msg.error()}")
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        #End of partition event
+                        sys.stderr.write('%% %s [%d] reached end at offset %d\n' %
+                                        (msg.topic(), msg.partition(), msg.offset()))
+                        continue
+                    elif msg.error():
+                        logging.error(f"Kafka Error: {msg.error()}")
 
-            else:
-                print(msg.value())
-                msg_process(msg,destination)
-                print(f"partition hiện tại: {msg.partition()} . offset của message hiện tại:{msg.offset()}")
-                msg_count += 1
-                print(f"số lượng message:{msg_count}")
-                if msg_count % MIN_COMMIT_COUNT == 0:
-                    consumer.commit(asynchronous=False)   
+                else:
+                    # print(msg.value())
+                    msg_process(msg,destination)
+                    print(f"partition hiện tại: {msg.partition()} . offset của message hiện tại:{msg.offset()}")
+                    msg_count += 1
+                    print(f"số lượng message:{msg_count}")
+                    if msg_count % MIN_COMMIT_COUNT == 0:
+                        consumer.commit(asynchronous=False)   
     finally:
         consumer.close()
 # create 1 consumer consume all partition
@@ -106,5 +104,4 @@ topic = 'product_view'
 consumer = one_consumer_init(topics,conf)
 check_offsets(consumer,topic)
 time.sleep(1)
-msg = consumer.poll(timeout = 100.0)
 # consume_loop(consumer,"test")

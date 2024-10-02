@@ -1,5 +1,6 @@
 import config
 from pymongo.errors import DuplicateKeyError
+from pymongo.errors import BulkWriteError
 from confluent_kafka import Producer
 import json
 # mongodb config, create mongo connect
@@ -9,12 +10,28 @@ conf  = config.producer_conf()
 producer = Producer(**conf)
 topic = 'load-product-view'
 #load json into mongo
+msg_json_list=[]
+MIN_LOAD_MONGO = 500
+message_count = 0
 def mongodb(msg_json):
-    try:
-        collection.insert_one(msg_json) 
-        print("load data successfully")
-    except DuplicateKeyError:
-        print(f"Document with _id {msg_json['_id']} already exists. Skipping.")
+    global message_count,msg_json_list
+    msg_json_list.append(msg_json)
+    message_count+=1
+    if(message_count%MIN_LOAD_MONGO==0):
+        try:
+            collection.insert_many(msg_json_list, ordered=False)
+            print("Data loaded successfully")
+            msg_json_list = []
+        except BulkWriteError as bwe:
+            # Hiển thị các lỗi về trùng lặp hoặc lỗi khác nếu có
+            for error in bwe.details['writeErrors']:
+                print(f"Document with _id {error['op']['_id']} already exists. Skipping.")
+
+    # try:
+    #     collection.insert_one(msg_json) 
+    #     print("load data successfully")
+    # except DuplicateKeyError:
+    #     print(f"Document with _id {msg_json['_id']} already exists. Skipping.")
 
 #load json into topic
 def acked(err, msg):
