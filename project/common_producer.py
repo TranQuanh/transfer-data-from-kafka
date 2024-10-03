@@ -2,6 +2,7 @@ import config
 from pymongo.errors import DuplicateKeyError
 from pymongo.errors import BulkWriteError
 from confluent_kafka import Producer
+import time
 import json
 # mongodb config, create mongo connect
 collection = config.mongo_conf()
