@@ -11,6 +11,8 @@ from common_producer import mongodb
 from common_producer import load_producer
 from confluent_kafka import  TopicPartition
 import multiprocessing
+
+
 # Thiết lập logging
 logging.basicConfig(filename='kafka_errors.log', level=logging.ERROR,
                     format='%(asctime)s - %(levelname)s - %(message)s')
